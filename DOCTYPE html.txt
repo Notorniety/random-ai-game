@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Jump Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f7f7f7;
+            font-family: Arial, sans-serif;
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 250px;
+            background-color: #ffffff;
+            border-bottom: 4px solid #333;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        #player {
+            position: absolute;
+            bottom: 0px;
+            left: 50px;
+            width: 50px;
+            height: 50px;
+            /* Replace 'player.png' with your image file name if different */
+            background-image: url('player.png'); 
+            background-size: cover;
+            background-position: center;
+        }
+
+        #obstacle {
+            position: absolute;
+            bottom: 0px;
+            right: -30px;
+            width: 30px;
+            height: 50px;
+            background-color: #ff4d4d; /* Red box for now */
+        }
+
+        #score {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        #game-over {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="score">Score: 0</div>
+        <div id="player"></div>
+        <div id="obstacle"></div>
+        <div id="game-over">GAME OVER<br><span style="font-size: 16px;">Press Space to Restart</span></div>
+    </div>
+
+    <script>
+        const player = document.getElementById('player');
+        const obstacle = document.getElementById('obstacle');
+        const scoreDisplay = document.getElementById('score');
+        const gameOverText = document.getElementById('game-over');
+
+        let isJumping = false;
+        let gravity = 0.9;
+        let score = 0;
+        let isGameOver = false;
+        let obstacleSpeed = 6;
+        let obstaclePosition = 800;
+
+        // Jump Controls
+        document.addEventListener('keydown', function(event) {
+            if (event.code === 'Space' || event.code === 'ArrowUp') {
+                if (isGameOver) {
+                    restartGame();
+                } else if (!isJumping) {
+                    jump();
+                }
+            }
+        });
+
+        function jump() {
+            isJumping = true;
+            let position = 0;
+            
+            // Upward movement & gravity loop
+            let timerId = setInterval(function() {
+                // Reach peak
+                if (position >= 130) {
+                    clearInterval(timerId);
+
+                    // Falling down
+                    let downTimerId = setInterval(function() {
+                        if (position <= 0) {
+                            clearInterval(downTimerId);
+                            isJumping = false;
+                        }
+                        position -= 5;
+                        player.style.bottom = position + 'px';
+                    }, 20);
+                }
+
+                // Going up
+                position += 8;
+                player.style.bottom = position + 'px';
+            }, 20);
+        }
+
+        function gameLoop() {
+            if (isGameOver) return;
+
+            // Move obstacle
+            obstaclePosition -= obstacleSpeed;
+            if (obstaclePosition < -30) {
+                obstaclePosition = 800; // Reset obstacle to right side
+                score += 10;
+                scoreDisplay.innerText = 'Score: ' + score;
+
+                // Slightly speed up game as score increases
+                if (obstacleSpeed < 15) obstacleSpeed += 0.2; 
+            }
+            obstacle.style.left = obstaclePosition + 'px';
+
+            // Hit detection
+            let playerBottom = parseInt(window.getComputedStyle(player).getPropertyValue('bottom'));
+            
+            if (obstaclePosition > 50 && obstaclePosition < 90 && playerBottom < 50) {
+                gameOver();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function gameOver() {
+            isGameOver = true;
+            gameOverText.style.display = 'block';
+        }
+
+        function restartGame() {
+            isGameOver = false;
+            score = 0;
+            obstacleSpeed = 6;
+            obstaclePosition = 800;
+            scoreDisplay.innerText = 'Score: 0';
+            gameOverText.style.display = 'none';
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start the game
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
